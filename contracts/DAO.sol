@@ -38,13 +38,12 @@ contract DAO {
             isMember[msg.sender] || isBoardMember[msg.sender],
             "Not a member of DAO"
         );
-        Proposal memory newProposal = Proposal({
-            description: description,
-            proposer: msg.sender,
-            isAccepted: false,
-            totalVotes: 0
-        });
-        proposals.push(newProposal);
+        proposals.push();
+        Proposal storage newProposal = proposals[proposals.length - 1];
+        newProposal.description = description;
+        newProposal.proposer = msg.sender;
+        newProposal.isAccepted = false;
+        newProposal.totalVotes = 0;
     }
 
     function vote(uint256 proposalIndex, bool accept) external {
