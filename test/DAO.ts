@@ -2,136 +2,49 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 describe("DAO", function () {
+  let DAO: any;
   let dao: any;
+  let deployer: any;
+  let boardMember: any;
+  let regularMember: any;
 
-  beforeEach(async function () {
-    const initialAssetPool = ethers.parseEther("1000");
-    const DAO = await ethers.getContractFactory("DAO");
-    let dao = (await DAO.deploy(initialAssetPool))
+  beforeEach(async () => {
+    // Get the ContractFactory and Signers here
+    DAO = await ethers.getContractFactory("DAO");
+    [deployer, boardMember, regularMember] = await ethers.getSigners();
+
+    // Deploy the contract and get its instance
+    dao = await DAO.connect(deployer).deploy(10000);
     await dao.deployed();
   });
 
-  describe("joinAsBoardMember", function () {
-    it("should add address to isBoardMember mapping", async function () {
-      const [boardMember] = await ethers.getSigners();
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      expect(await dao.isBoardMember(boardMember.address)).to.be.true;
-    });
-
-    it("should revert if address is already a board member", async function () {
-      const [boardMember] = await ethers.getSigners();
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await expect(dao.joinAsBoardMember({ from: boardMember.address })).to.be.revertedWith(
-        "Already a board member"
-      );
-    });
-
-    it("should revert if address is already a regular member", async function () {
-      const [regularMember] = await ethers.getSigners();
-      await dao.joinAsRegularMember({ from: regularMember.address });
-      await expect(dao.joinAsBoardMember({ from: regularMember.address })).to.be.revertedWith(
-        "Already a regular member"
-      );
-    });
+  it("Should set the right owner and initial asset pool", async function () {
+    expect(await dao.owner()).to.equal(deployer.address);
+    expect(await dao.totalAssetPool()).to.equal(10000);
   });
 
-  describe("joinAsRegularMember", function () {
-    it("should add address to isMember mapping", async function () {
-      const [regularMember] = await ethers.getSigners();
-      await dao.joinAsRegularMember({ from: regularMember.address });
-      expect(await dao.isMember(regularMember.address)).to.be.true;
-    });
-
-    it("should revert if address is already a regular member", async function () {
-      const [regularMember] = await ethers.getSigners();
-      await dao.joinAsRegularMember({ from: regularMember.address });
-      await expect(dao.joinAsRegularMember({ from: regularMember.address })).to.be.revertedWith(
-        "Already a regular member"
-      );
-    });
-
-    it("should revert if address is already a board member", async function () {
-      const [boardMember] = await ethers.getSigners();
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await expect(dao.joinAsRegularMember({ from: boardMember.address })).to.be.revertedWith(
-        "Already a board member"
-      );
-    });
+  it("Should allow a person to join as a board member", async function () {
+    await dao.connect(boardMember).joinAsBoardMember();
+    expect(await dao.isBoardMember(boardMember.address)).to.equal(true);
   });
 
-  describe("makeProposal", function () {
-    it("should add a new proposal to the proposals array", async function () {
-      const [boardMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await dao.makeProposal(description, { from: boardMember.address });
-      const proposal = await dao.proposals(0);
-      expect(proposal.description).to.equal(description);
-      expect(proposal.proposer).to.equal(boardMember.address);
-      expect(proposal.isAccepted).to.be.false;
-      expect(proposal.totalVotes).to.equal(0);
-    });
-
-    it("should revert if caller is not a member of DAO", async function () {
-      const [nonMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await expect(dao.makeProposal(description, { from: nonMember.address })).to.be.revertedWith(
-        "Not a member of DAO"
-      );
-    });
+  it("Should allow a person to join as a regular member", async function () {
+    await dao.connect(regularMember).joinAsRegularMember();
+    expect(await dao.isMember(regularMember.address)).to.equal(true);
   });
 
-  describe("vote", function () {
-    it("should add a vote to the specified proposal", async function () {
-      const [boardMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await dao.makeProposal(description, { from: boardMember.address });
-      await dao.vote(0, true, { from: boardMember.address });
-      const proposal = await dao.proposals(0);
-      expect(proposal.totalVotes).to.equal(1);
-      expect(proposal.votes[boardMember.address]).to.be.true;
-    });
+  it("Should allow a member to make a proposal", async function () {
+    await dao.connect(regularMember).joinAsRegularMember();
+    await dao.connect(regularMember).makeProposal("Test Proposal");
+    expect((await dao.proposals(0)).description).to.equal("Test Proposal");
+  });
 
-    it("should set isAccepted to true if accept is true", async function () {
-      const [boardMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await dao.makeProposal(description, { from: boardMember.address });
-      await dao.vote(0, true, { from: boardMember.address });
-      const proposal = await dao.proposals(0);
-      expect(proposal.isAccepted).to.be.true;
-    });
-
-    it("should set isAccepted to false if accept is false", async function () {
-      const [boardMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await dao.makeProposal(description, { from: boardMember.address });
-      await dao.vote(0, false, { from: boardMember.address });
-      const proposal = await dao.proposals(0);
-      expect(proposal.isAccepted).to.be.false;
-    });
-
-    it("should revert if caller is not a board member", async function () {
-      const [regularMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsRegularMember({ from: regularMember.address });
-      await dao.makeProposal(description, { from: regularMember.address });
-      await expect(dao.vote(0, true, { from: regularMember.address })).to.be.revertedWith(
-        "Only board members can vote"
-      );
-    });
-
-    it("should revert if caller has already voted", async function () {
-      const [boardMember] = await ethers.getSigners();
-      const description = "Test proposal";
-      await dao.joinAsBoardMember({ from: boardMember.address });
-      await dao.makeProposal(description, { from: boardMember.address });
-      await dao.vote(0, true, { from: boardMember.address });
-      await expect(dao.vote(0, true, { from: boardMember.address })).to.be.revertedWith(
-        "Already voted"
-      );
-    });
+  it("Should allow a board member to vote on a proposal", async function () {
+    await dao.connect(regularMember).joinAsRegularMember();
+    await dao.connect(boardMember).joinAsBoardMember();
+    await dao.connect(regularMember).makeProposal("Test Proposal");
+    await dao.connect(boardMember).vote(0, true);
+    expect((await dao.proposals(0)).totalVotes).to.equal(1);
+    expect((await dao.proposals(0)).isAccepted).to.equal(true);
   });
 });

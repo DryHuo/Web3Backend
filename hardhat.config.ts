@@ -9,13 +9,13 @@ if (!process.env.PRIVATE_KEY || !process.env.ETHERSCAN_API_KEY) {
 }
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "polygon_mumbai",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
-    polygon_mumbai: {
-      url: "https://rpc-mumbai.maticvigil.com/v1",
-      accounts: [process.env.PRIVATE_KEY],
-    },
+    // polygon_mumbai: {
+    //   url: "https://rpc-mumbai.maticvigil.com/v1",
+    //   accounts: [process.env.PRIVATE_KEY],
+    // },
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
