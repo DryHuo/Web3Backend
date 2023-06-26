@@ -1,5 +1,5 @@
 {
-  "name": "Web3Backend",
+  "name": "@creatordao/web3-backend",
   "version": "1.0.0",
   "description": "Web3 Backend for CreatorDAO",
   "main": "index.js",
@@ -15,10 +15,11 @@
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "hardhat": "^2.16.0"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/contracts": "^4.9.2",
     "dotenv": "^16.3.1"
   }
 }

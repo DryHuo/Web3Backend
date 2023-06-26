@@ -1,11 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-etherscan";
-import "@nomicfoundation/hardhat-ethers";
+import "dotenv/config";
 
-if (!process.env.PRIVATE_KEY || !process.env.POLYGONSCAN_API_KEY) {
+if (!process.env.PRIVATE_KEY || !process.env.ETHERSCAN_API_KEY) {
   throw new Error(
-    "Please set your PRIVATE_KEY and POLYSCAN_API_KEY in a .env file"
+    "Please set your PRIVATE_KEY and ETHERSCAN_API_KEY in a .env file"
   );
 }
 
@@ -14,12 +13,12 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {},
     polygon_mumbai: {
-      url: "https://rpc-mumbai.maticvigil.com",
+      url: "https://rpc-mumbai.maticvigil.com/v1",
       accounts: [process.env.PRIVATE_KEY],
     },
   },
   etherscan: {
-    apiKey: process.env.POLYGONSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   solidity: {
     version: "0.8.18",
