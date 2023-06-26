@@ -47,6 +47,9 @@ contract DAO {
         );
     }
 
+    /**************************************************************************
+     *                              Modifiers                                 *
+     **************************************************************************/
     function joinAsBoardMember(uint256 stake) external {
         require(stake >= minStake, "Stake must be at least minimum stake");
         require(!isMember[msg.sender], "Already a regular member");
@@ -63,6 +66,9 @@ contract DAO {
         isMember[msg.sender] = true;
     }
 
+    /**************************************************************************
+     *                              Proposals                                 *
+     **************************************************************************/
     function makeProposal(string calldata description) external {
         require(
             isMember[msg.sender] || isBoardMember[msg.sender],
@@ -88,6 +94,9 @@ contract DAO {
         }
     }
 
+    /**************************************************************************
+     *                           Private Functions                            *
+     **************************************************************************/
     // Internal function to handle transferring tokens
     function _transferTokens(
         address from,
