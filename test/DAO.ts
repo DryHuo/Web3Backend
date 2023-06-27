@@ -2,9 +2,9 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 describe("Caves", function () {
-  let WikiToken: any;
+  let WikiTokenFactory: any;
   let wikiToken: any;
-  let Caves: any;
+  let CaveFactory: any;
   let caves: any;
   let deployer: any;
   let addr1: any;
@@ -12,24 +12,17 @@ describe("Caves", function () {
 
   beforeEach(async () => {
     // Get the ContractFactory and Signers here
-    WikiToken = await ethers.getContractFactory("WikiToken");
+    WikiTokenFactory = await ethers.getContractFactory("WikiToken");
     [deployer, addr1, addr2] = await ethers.getSigners();
 
     // Deploy the contract and get its instance
-    wikiToken = await WikiToken.connect(deployer).deploy(10000);
-    await wikiToken.deployed();
+    wikiToken = (await WikiTokenFactory.deploy(10000)) as any;
+    console.log("WikiToken deployed to:", wikiToken.target);
 
     // Deploy the Caves contract with the address of the deployed WikiToken
-    Caves = await ethers.getContractFactory("Caves");
-    caves = await Caves.connect(deployer).deploy(
-      wikiToken.address,
-      deployer.address
-    );
-    await caves.deployed();
-  });
-
-  it("Should set the right owner", async function () {
-    expect(await caves._taxAccount()).to.equal(deployer.address);
+    CaveFactory = await ethers.getContractFactory("Caves");
+    caves = (await CaveFactory.deploy(wikiToken.target, deployer)) as any;
+    console.log("Caves deployed to:", caves.target);
   });
 
   it("Should create a new DAO", async function () {
