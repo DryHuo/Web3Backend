@@ -1,50 +1,89 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-describe("DAO", function () {
-  let DAO: any;
-  let dao: any;
+describe("Caves", function () {
+  let WikiToken: any;
+  let wikiToken: any;
+  let Caves: any;
+  let caves: any;
   let deployer: any;
-  let boardMember: any;
-  let regularMember: any;
+  let addr1: any;
+  let addr2: any;
 
   beforeEach(async () => {
     // Get the ContractFactory and Signers here
-    DAO = await ethers.getContractFactory("DAO");
-    [deployer, boardMember, regularMember] = await ethers.getSigners();
+    WikiToken = await ethers.getContractFactory("WikiToken");
+    [deployer, addr1, addr2] = await ethers.getSigners();
 
     // Deploy the contract and get its instance
-    dao = await DAO.connect(deployer).deploy(10000);
-    await dao.deployed();
+    wikiToken = await WikiToken.connect(deployer).deploy(10000);
+    await wikiToken.deployed();
+
+    // Deploy the Caves contract with the address of the deployed WikiToken
+    Caves = await ethers.getContractFactory("Caves");
+    caves = await Caves.connect(deployer).deploy(
+      wikiToken.address,
+      deployer.address
+    );
+    await caves.deployed();
   });
 
-  it("Should set the right owner and initial asset pool", async function () {
-    expect(await dao.owner()).to.equal(deployer.address);
-    expect(await dao.totalAssetPool()).to.equal(10000);
+  it("Should set the right owner", async function () {
+    expect(await caves._taxAccount()).to.equal(deployer.address);
   });
 
-  it("Should allow a person to join as a board member", async function () {
-    await dao.connect(boardMember).joinAsBoardMember();
-    expect(await dao.isBoardMember(boardMember.address)).to.equal(true);
+  it("Should create a new DAO", async function () {
+    await expect(
+      caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100)
+    )
+      .to.emit(caves, "DAOCreated")
+      .withArgs(1, await deployer.getAddress(), "TestDAO");
   });
 
-  it("Should allow a person to join as a regular member", async function () {
-    await dao.connect(regularMember).joinAsRegularMember();
-    expect(await dao.isMember(regularMember.address)).to.equal(true);
+  it("Should allow members to join", async function () {
+    await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await expect(caves.connect(addr1).joinAsMember(1))
+      .to.emit(caves, "MemberJoined")
+      .withArgs(1, await addr1.getAddress());
   });
 
-  it("Should allow a member to make a proposal", async function () {
-    await dao.connect(regularMember).joinAsRegularMember();
-    await dao.connect(regularMember).makeProposal("Test Proposal");
-    expect((await dao.proposals(0)).description).to.equal("Test Proposal");
+  it("Should allow board members to join with stake", async function () {
+    await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await expect(caves.connect(addr2).joinAsBoardMember(1, 20))
+      .to.emit(caves, "BoardMemberJoined")
+      .withArgs(1, await addr2.getAddress(), 20);
   });
 
-  it("Should allow a board member to vote on a proposal", async function () {
-    await dao.connect(regularMember).joinAsRegularMember();
-    await dao.connect(boardMember).joinAsBoardMember();
-    await dao.connect(regularMember).makeProposal("Test Proposal");
-    await dao.connect(boardMember).vote(0, true);
-    expect((await dao.proposals(0)).totalVotes).to.equal(1);
-    expect((await dao.proposals(0)).isAccepted).to.equal(true);
+  it("Should create a new post", async function () {
+    await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await expect(
+      caves
+        .connect(addr1)
+        .createPost(1, "First Post!", [], await addr1.getAddress())
+    )
+      .to.emit(caves, "PostCreated")
+      .withArgs(1, 1);
+  });
+
+  it("Should allow board members to create a proposal", async function () {
+    await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await expect(
+      caves
+        .connect(addr2)
+        .createProposal(1, "First Proposal!", await addr2.getAddress())
+    )
+      .to.emit(caves, "ProposalCreated")
+      .withArgs(1, 1);
+  });
+
+  it("Should allow board members to vote on a proposal", async function () {
+    await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await caves.connect(addr2).joinAsBoardMember(1, 20);
+    await caves
+      .connect(addr2)
+      .createProposal(1, "First Proposal!", await addr2.getAddress());
+    await expect(caves.connect(addr2).voteProposal(1, 0, true))
+      .to.emit(caves, "VoteRecorded")
+      .withArgs(1, 0, await addr2.getAddress(), true);
   });
 });
