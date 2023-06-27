@@ -71,6 +71,8 @@ contract Caves {
         token.transferFrom(msg.sender, address(this), initialStake - tax);
 
         newDAO.treasryPool = initialStake - tax;
+
+        emit DAOCreated(name, msg.sender);
     }
 
     function joinAsBoardMember(string memory daoName, uint256 stake) external {
@@ -87,11 +89,15 @@ contract Caves {
         token.transferFrom(msg.sender, address(this), stake - tax);
 
         dao.treasryPool += stake - tax;
+
+        emit BoardMemberJoined(daoName, msg.sender);
     }
 
     function joinAsMember(string memory daoName) external {
         DAO storage dao = daos[daoName];
         dao.members.push(msg.sender);
+
+        emit MemberJoined(daoName, msg.sender);
     }
 
     /**************************************************************************
@@ -111,6 +117,8 @@ contract Caves {
         newPost.author = author;
         newPost.timestamp = block.timestamp;
         dao.posts.push(newPost);
+
+        emit PostCreated(daoName, author);
     }
 
     /**************************************************************************
@@ -129,6 +137,8 @@ contract Caves {
         ];
         newProposal.description = description;
         newProposal.proposer = proposer;
+
+        emit ProposalCreated(daoName, proposer, description);
     }
 
     function voteProposal(
@@ -148,6 +158,22 @@ contract Caves {
         );
         proposal.voters.push(msg.sender);
         proposal.votes.push(vote);
+
+        if (proposal.voters.length == dao.board.length) {
+            uint256 yesVotes = 0;
+            uint256 noVotes = 0;
+            for (uint256 i = 0; i < proposal.votes.length; i++) {
+                if (proposal.votes[i]) {
+                    yesVotes++;
+                } else {
+                    noVotes++;
+                }
+            }
+            if (yesVotes > noVotes) {
+                proposal.isAccepted = true;
+                dao.acceptedProposals.push(proposal);
+            }
+        }
     }
 
     /**************************************************************************
@@ -173,4 +199,23 @@ contract Caves {
         }
         return false;
     }
+
+    /**************************************************************************
+     *                               Events                                   *
+     **************************************************************************/
+    event DAOCreated(string indexed name, address indexed initiator);
+    event BoardMemberJoined(string indexed daoName, address indexed member);
+    event MemberJoined(string indexed daoName, address indexed member);
+    event PostCreated(string indexed daoName, address indexed author);
+    event ProposalCreated(
+        string indexed daoName,
+        address indexed proposer,
+        string description
+    );
+    event ProposalVoted(
+        string indexed daoName,
+        address indexed voter,
+        uint256 indexed proposalIndex,
+        bool vote
+    );
 }

@@ -27,9 +27,18 @@ describe("Caves", function () {
     const deployerSigner = wikiToken.connect(deployer);
     const addr1Signer = wikiToken.connect(addr1);
     const addr2Signer = wikiToken.connect(addr2);
-    const approveTx = await deployerSigner.approve(caves.target, "90000000000000000000");
-    const approveTx2 = await addr1Signer.approve(caves.target, "90000000000000000000");
-    const approveTx3 = await addr2Signer.approve(caves.target, "90000000000000000000");
+    const approveTx = await deployerSigner.approve(
+      caves.target,
+      "90000000000000000000"
+    );
+    const approveTx2 = await addr1Signer.approve(
+      caves.target,
+      "90000000000000000000"
+    );
+    const approveTx3 = await addr2Signer.approve(
+      caves.target,
+      "90000000000000000000"
+    );
     await approveTx.wait();
     await approveTx2.wait();
     await approveTx3.wait();
@@ -40,7 +49,7 @@ describe("Caves", function () {
       caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100)
     )
       .to.emit(caves, "DAOCreated")
-      .withArgs(1, await deployer.getAddress(), "TestDAO");
+      .withArgs("TestDAO", await deployer.getAddress());
   });
 
   it("Should allow members to join", async function () {
@@ -65,7 +74,7 @@ describe("Caves", function () {
         .createPost(1, "First Post!", [], await addr1.getAddress())
     )
       .to.emit(caves, "PostCreated")
-      .withArgs(1, 1);
+      .withArgs("TestDAO");
   });
 
   it("Should allow board members to create a proposal", async function () {
