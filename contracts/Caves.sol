@@ -15,7 +15,7 @@ contract Caves {
         bool isAccepted;
         uint256 totalVotes;
         address[] voters;
-        uint8[] votes; // 0 = no vote, 1 = yes, 2 = no
+        bool[] votes;
     }
 
     struct Post {
@@ -124,8 +124,8 @@ contract Caves {
         Proposal memory newProposal;
         newProposal.description = description;
         newProposal.proposer = proposer;
-        newProposal.voters = dao.board;
-        newProposal.votes = new uint8[](dao.board.length);
+        newProposal.voters = new address[](0);
+        newProposal.votes = new bool[](0);
         dao.pendingProposals.push(newProposal);
     }
 
@@ -137,15 +137,17 @@ contract Caves {
         DAO storage dao = daos[daoIndex];
         Proposal storage proposal = dao.pendingProposals[proposalIndex];
         require(
-            proposal.votes[dao.board.length - 1] == 0,
-            "Proposal has already been voted on"
+            _isInArray(dao.board, msg.sender),
+            "You are not a member of this DAO"
         );
-        uint256 voteWeight = token.balanceOf(dao.board[proposal.voters.length]);
+        require(
+            !_isInArray(proposal.voters, msg.sender),
+            "You have already voted on this proposal"
+        );
         if (vote) {
-            proposal.votes[proposal.voters.length] = 1;
-            proposal.totalVotes += voteWeight;
+            proposal.votes[proposal.voters.length] = true;
         } else {
-            proposal.votes[proposal.voters.length] = 2;
+            proposal.votes[proposal.voters.length] = false;
         }
         proposal.voters.push(msg.sender);
     }
@@ -160,5 +162,17 @@ contract Caves {
         uint256 amount
     ) internal {
         require(token.transferFrom(from, to, amount), "Token transfer failed");
+    }
+
+    function _isInArray(
+        address[] memory array,
+        address element
+    ) internal pure returns (bool) {
+        for (uint256 i = 0; i < array.length; i++) {
+            if (array[i] == element) {
+                return true;
+            }
+        }
+        return false;
     }
 }
