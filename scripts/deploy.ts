@@ -5,14 +5,13 @@ import "dotenv/config";
 async function main() {
   const [deployer] = await ethers.getSigners();
 
-  console.log("Deploying contracts with the account:", deployer.address);
-
-  console.log("Account balance:", (await deployer.getAddress()).toString());
+  console.log("Deploying contracts with the account:", deployer);
+  console.log("Account balance:", (await deployer.provider.getBalance(deployer.address)).toString());
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
   const WikiToken = await WikiTokenFactory.deploy(1000000) as any;
-  console.log("WikiToken address:", WikiToken.address);
+  console.log("WikiToken address:", WikiToken.target);
 
 
   const walletAddress = process.env.ASSET_POOL_ADDRESS;
@@ -20,15 +19,15 @@ async function main() {
     throw new Error("Missing environment variable WALLET_ADDRESS");
   }
 
-  const wikiTokenAddress = WikiToken.address;
+  const wikiTokenAddress = WikiToken.target;
   if (!wikiTokenAddress) {
     throw new Error("WikiToken address is not available");
   }
 
   // Deploy the DAO
   const DAOFactory = await ethers.getContractFactory("DAO");
-  const dao = (await DAOFactory.deploy(wikiTokenAddress, walletAddress, 0.1, 0)) as unknown as Contract;
-  console.log("DAO address:", dao.address);
+  const dao = (await DAOFactory.deploy(wikiTokenAddress, walletAddress, 1, 1)) as unknown as Contract;
+  console.log("DAO address:", dao.target);
 
   // Lock logic (replace with sdesired lock logic)
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
