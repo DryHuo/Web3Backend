@@ -19,6 +19,7 @@ contract Caves {
     }
 
     struct Post {
+        DAO dao; // The DAO that the post belongs to
         string[] imageHashes; // change to NFT addresses after implementing NFTs
         string[] imageAddresses;
         string content;
@@ -62,15 +63,40 @@ contract Caves {
         DAO storage newDAO = daos[daoCounter];
         newDAO.owner = owner;
         newDAO.minStake = minStake;
-        newDAO.treasryPool = initialStake;
+
+        uint256 tax = (initialStake * TAX_RATE) / 100;
+        token.transferFrom(owner, _taxAccount, tax);
+        token.transferFrom(owner, address(this), initialStake - tax);
+
+        newDAO.treasryPool = initialStake - tax;
         ownerToDAOIds[owner].push(daoCounter);
+    }
+
+    function joinAsBoardMember(uint256 daoIndex, uint256 stake) external {
+        DAO storage dao = daos[daoIndex];
+        require(
+            token.balanceOf(msg.sender) >= dao.minStake,
+            "You do not have enough tokens to join this DAO"
+        );
+        dao.board.push(msg.sender);
+        dao.members.push(msg.sender);
+
+        uint256 tax = (stake * TAX_RATE) / 100;
+        token.transferFrom(msg.sender, _taxAccount, tax);
+        token.transferFrom(msg.sender, address(this), stake - tax);
+
+        dao.treasryPool += stake - tax;
+    }
+
+    function joinAsMember(uint256 daoIndex) external {
+        DAO storage dao = daos[daoIndex];
+        dao.members.push(msg.sender);
     }
 
     /**************************************************************************
      *                                Posts                                   *
      **************************************************************************/
     function createPost(
-        address daoOwner,
         uint256 daoIndex,
         string memory content,
         string[] memory imageHashes,
@@ -78,6 +104,7 @@ contract Caves {
     ) external {
         DAO storage dao = daos[daoIndex];
         Post memory newPost;
+        newPost.dao = dao;
         newPost.content = content;
         newPost.imageHashes = imageHashes;
         newPost.author = author;
