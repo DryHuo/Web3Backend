@@ -8,8 +8,6 @@ contract Caves {
     address private _taxAccount; // The address that receives the tax fees
     uint256 public constant TAX_RATE = 2; // The tax rate is 2%
     uint256 public constant MIN_INIT_STAKE = 10; // The minimum amount of tokens to stake to create a DAO
-    uint256 public constant MAX_BOARD_MEMBERS = 5; // The maximum amount of board members in a DAO
-    uint256 public constant MAX_MEMBERS = 20; // The maximum amount of members in a DAO
 
     struct Proposal {
         string description;
@@ -36,9 +34,7 @@ contract Caves {
         uint256 minStake; // Minimum amount of tokens to stake to become a board member
         uint256 treasryPool; // Total amount of tokens staked in the DAO
         address[] board;
-        uint256 maxBoardCount;
         address[] members;
-        uint256 maxMemberCount;
         Proposal[] pendingProposals;
         Proposal[] acceptedProposals;
         Post[] posts;
@@ -60,9 +56,7 @@ contract Caves {
         string memory name,
         string memory description,
         uint256 minStake,
-        uint256 initialStake,
-        uint256 maxBoardCount,
-        uint256 maxMemberCount
+        uint256 initialStake
     ) external {
         require(
             initialStake >= MIN_INIT_STAKE,
@@ -73,8 +67,6 @@ contract Caves {
         newDAO.name = name;
         newDAO.initiator = msg.sender;
         newDAO.minStake = minStake;
-        newDAO.maxBoardCount = maxBoardCount;
-        newDAO.maxMemberCount = maxMemberCount;
         newDAO.description = description;
 
         uint256 tax = (initialStake * TAX_RATE) / 100;
@@ -141,8 +133,8 @@ contract Caves {
         ];
         newProposal.description = description;
         newProposal.proposer = proposer;
-        newProposal.voters = new address[](dao.maxBoardCount);
-        newProposal.votes = new bool[](dao.maxBoardCount);
+        newProposal.voters = new address[](0);
+        newProposal.votes = new bool[](0);
     }
 
     function voteProposal(
@@ -160,9 +152,8 @@ contract Caves {
             !_isInArray(proposal.voters, msg.sender),
             "You have already voted on this proposal"
         );
-        proposal.voteCounter++;
-        proposal.voters[proposal.voteCounter] = msg.sender;
-        proposal.votes[proposal.voteCounter] = vote;
+        proposal.voters.push(msg.sender);
+        proposal.votes.push(vote);
     }
 
     /**************************************************************************
