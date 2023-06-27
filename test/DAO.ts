@@ -71,10 +71,10 @@ describe("Caves", function () {
     await expect(
       caves
         .connect(addr1)
-        .createPost(1, "First Post!", [], await addr1.getAddress())
+        .createPost("TestDAO", "First Post!", [], await addr1.getAddress())
     )
       .to.emit(caves, "PostCreated")
-      .withArgs("TestDAO");
+      .withArgs("TestDAO", "First Post!");
   });
 
   it("Should allow board members to create a proposal", async function () {
