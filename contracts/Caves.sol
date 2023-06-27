@@ -8,12 +8,14 @@ contract Caves {
     address private _taxAccount; // The address that receives the tax fees
     uint256 public constant TAX_RATE = 2; // The tax rate is 2%
     uint256 public constant MIN_INIT_STAKE = 10; // The minimum amount of tokens to stake to create a DAO
+    uint256 public constant MAX_BOARD_MEMBERS = 5; // The maximum amount of board members in a DAO
+    uint256 public constant MAX_MEMBERS = 20; // The maximum amount of members in a DAO
 
     struct Proposal {
         string description;
         address proposer;
         bool isAccepted;
-        uint256 totalVotes;
+        uint256 voteCounter;
         address[] voters;
         bool[] votes;
     }
@@ -28,11 +30,15 @@ contract Caves {
     }
 
     struct DAO {
-        address owner; // The address that created the DAO
+        string name;
+        string description;
+        address initiator; // The address that created the DAO
         uint256 minStake; // Minimum amount of tokens to stake to become a board member
         uint256 treasryPool; // Total amount of tokens staked in the DAO
         address[] board;
+        uint256 maxBoardCount;
         address[] members;
+        uint256 maxMemberCount;
         Proposal[] pendingProposals;
         Proposal[] acceptedProposals;
         Post[] posts;
@@ -51,9 +57,12 @@ contract Caves {
      *                          DAO Functionality                             *
      **************************************************************************/
     function createDAO(
-        address owner,
+        string memory name,
+        string memory description,
         uint256 minStake,
-        uint256 initialStake
+        uint256 initialStake,
+        uint256 maxBoardCount,
+        uint256 maxMemberCount
     ) external {
         require(
             initialStake >= MIN_INIT_STAKE,
@@ -61,15 +70,19 @@ contract Caves {
         );
         daoCounter++;
         DAO storage newDAO = daos[daoCounter];
-        newDAO.owner = owner;
+        newDAO.name = name;
+        newDAO.initiator = msg.sender;
         newDAO.minStake = minStake;
+        newDAO.maxBoardCount = maxBoardCount;
+        newDAO.maxMemberCount = maxMemberCount;
+        newDAO.description = description;
 
         uint256 tax = (initialStake * TAX_RATE) / 100;
-        token.transferFrom(owner, _taxAccount, tax);
-        token.transferFrom(owner, address(this), initialStake - tax);
+        token.transferFrom(msg.sender, _taxAccount, tax);
+        token.transferFrom(msg.sender, address(this), initialStake - tax);
 
         newDAO.treasryPool = initialStake - tax;
-        ownerToDAOIds[owner].push(daoCounter);
+        ownerToDAOIds[msg.sender].push(daoCounter);
     }
 
     function joinAsBoardMember(uint256 daoIndex, uint256 stake) external {
@@ -121,12 +134,15 @@ contract Caves {
         address proposer
     ) external {
         DAO storage dao = daos[daoIndex];
-        Proposal memory newProposal;
+        dao.pendingProposals.push();
+
+        Proposal storage newProposal = dao.pendingProposals[
+            dao.pendingProposals.length - 1
+        ];
         newProposal.description = description;
         newProposal.proposer = proposer;
-        newProposal.voters = new address[](0);
-        newProposal.votes = new bool[](0);
-        dao.pendingProposals.push(newProposal);
+        newProposal.voters = new address[](dao.maxBoardCount);
+        newProposal.votes = new bool[](dao.maxBoardCount);
     }
 
     function voteProposal(
@@ -144,12 +160,9 @@ contract Caves {
             !_isInArray(proposal.voters, msg.sender),
             "You have already voted on this proposal"
         );
-        if (vote) {
-            proposal.votes[proposal.voters.length] = true;
-        } else {
-            proposal.votes[proposal.voters.length] = false;
-        }
-        proposal.voters.push(msg.sender);
+        proposal.voteCounter++;
+        proposal.voters[proposal.voteCounter] = msg.sender;
+        proposal.votes[proposal.voteCounter] = vote;
     }
 
     /**************************************************************************
