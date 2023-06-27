@@ -133,8 +133,6 @@ contract Caves {
         ];
         newProposal.description = description;
         newProposal.proposer = proposer;
-        newProposal.voters = new address[](0);
-        newProposal.votes = new bool[](0);
     }
 
     function voteProposal(
