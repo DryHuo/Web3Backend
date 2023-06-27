@@ -17,13 +17,15 @@ async function main() {
   console.log("WikiToken address:", wikiToken.address);
 
   // Deploy the DAO
+  const _LifeWikiAssetPool = process.env.LIFE_WIKI_ASSET_POOL || "";
   const DAOFactory = await ethers.getContractFactory("DAO");
   const dao = (await DAOFactory.deploy(
     wikiToken.address,
-    process.env.PRIVATE_KEY,
+    _LifeWikiAssetPool,
     minStake,
     initialAssetPool
   )) as any;
+  await dao.deployed();
   console.log("DAO address:", dao.address);
 
   // Lock logic (replace with desired lock logic)
