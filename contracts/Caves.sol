@@ -19,7 +19,7 @@ contract Caves {
     }
 
     struct Post {
-        uint256 daoID; // The DAO that the post belongs to
+        string dao; // The DAO that the post belongs to
         string[] imageHashes; // change to NFT addresses after implementing NFTs
         string[] imageAddresses;
         string content;
@@ -40,9 +40,7 @@ contract Caves {
         Post[] posts;
     }
 
-    mapping(uint256 => DAO) public daos; // DAOs by ID
-    mapping(address => uint256[]) public ownerToDAOIds; // All DAOs owned by an address
-    uint256 public daoCounter; // Counter to generate unique DAO IDs
+    mapping(string => DAO) public daos; // DAOs by names
 
     constructor(address tokenAddress, address taxAccount) {
         token = IERC20(tokenAddress);
@@ -62,8 +60,7 @@ contract Caves {
             initialStake >= MIN_INIT_STAKE,
             "Initial stake is less than minimum stake required"
         );
-        daoCounter++;
-        DAO storage newDAO = daos[daoCounter];
+        DAO storage newDAO = daos[name];
         newDAO.name = name;
         newDAO.initiator = msg.sender;
         newDAO.minStake = minStake;
@@ -74,11 +71,10 @@ contract Caves {
         token.transferFrom(msg.sender, address(this), initialStake - tax);
 
         newDAO.treasryPool = initialStake - tax;
-        ownerToDAOIds[msg.sender].push(daoCounter);
     }
 
-    function joinAsBoardMember(uint256 daoIndex, uint256 stake) external {
-        DAO storage dao = daos[daoIndex];
+    function joinAsBoardMember(string memory daoName, uint256 stake) external {
+        DAO storage dao = daos[daoName];
         require(
             token.balanceOf(msg.sender) >= dao.minStake,
             "You do not have enough tokens to join this DAO"
@@ -93,8 +89,8 @@ contract Caves {
         dao.treasryPool += stake - tax;
     }
 
-    function joinAsMember(uint256 daoIndex) external {
-        DAO storage dao = daos[daoIndex];
+    function joinAsMember(string memory daoName) external {
+        DAO storage dao = daos[daoName];
         dao.members.push(msg.sender);
     }
 
@@ -102,14 +98,14 @@ contract Caves {
      *                                Posts                                   *
      **************************************************************************/
     function createPost(
-        uint256 daoIndex,
+        string memory daoName,
         string memory content,
         string[] memory imageHashes,
         address author
     ) external {
-        DAO storage dao = daos[daoIndex];
+        DAO storage dao = daos[daoName];
         Post memory newPost;
-        newPost.daoID = daoIndex;
+        newPost.dao = daoName;
         newPost.content = content;
         newPost.imageHashes = imageHashes;
         newPost.author = author;
@@ -121,11 +117,11 @@ contract Caves {
      *                              Proposals                                 *
      **************************************************************************/
     function createProposal(
-        uint256 daoIndex,
+        string memory daoName,
         string memory description,
         address proposer
     ) external {
-        DAO storage dao = daos[daoIndex];
+        DAO storage dao = daos[daoName];
         dao.pendingProposals.push();
 
         Proposal storage newProposal = dao.pendingProposals[
@@ -136,11 +132,11 @@ contract Caves {
     }
 
     function voteProposal(
-        uint256 daoIndex,
+        string memory daoName,
         uint256 proposalIndex,
         bool vote
     ) external {
-        DAO storage dao = daos[daoIndex];
+        DAO storage dao = daos[daoName];
         Proposal storage proposal = dao.pendingProposals[proposalIndex];
         require(
             _isInArray(dao.board, msg.sender),
