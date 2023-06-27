@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { any } from "hardhat/internal/core/params/argumentTypes";
 
 describe("Caves", function () {
   let WikiTokenFactory: any;
@@ -74,7 +75,7 @@ describe("Caves", function () {
         .createPost("TestDAO", "First Post!", [], await addr1.getAddress())
     )
       .to.emit(caves, "PostCreated")
-      .withArgs("TestDAO", "First Post!");
+      .withArgs("TestDAO", "First Post!", await addr1.getAddress());
   });
 
   it("Should allow board members to create a proposal", async function () {
@@ -82,20 +83,28 @@ describe("Caves", function () {
     await expect(
       caves
         .connect(addr2)
-        .createProposal(1, "First Proposal!", await addr2.getAddress())
-    )
-      .to.emit(caves, "ProposalCreated")
-      .withArgs(1, 1);
+        .createProposal(
+          "TestDAO",
+          "First Proposal!",
+          "PublishPost",
+          await addr2.getAddress()
+        )
+    ).to.emit(caves, "ProposalCreated");
   });
 
-  it("Should allow board members to vote on a proposal", async function () {
+  it("Should allow board members to vote on an existing proposal", async function () {
     await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
-    await caves.connect(addr2).joinAsBoardMember(1, 20);
     await caves
       .connect(addr2)
-      .createProposal(1, "First Proposal!", await addr2.getAddress());
-    await expect(caves.connect(addr2).voteProposal(1, 0, true))
-      .to.emit(caves, "VoteRecorded")
-      .withArgs(1, 0, await addr2.getAddress(), true);
+      .createProposal(
+        "TestDAO",
+        "First Proposal!",
+        "PublishPost",
+        await addr2.getAddress()
+      );
+    await expect(caves.connect(addr2).voteOnProposal(1, true)).to.emit(
+      caves,
+      "ProposalVotedOn"
+    );
   });
 });

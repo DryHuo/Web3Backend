@@ -9,7 +9,13 @@ contract Caves {
     uint256 public constant TAX_RATE = 2; // The tax rate is 2%
     uint256 public constant MIN_INIT_STAKE = 10; // The minimum amount of tokens to stake to create a DAO
 
+    enum ProposalType {
+        PublishPost,
+        LeaveDAO
+    }
+
     struct Proposal {
+        ProposalType proposalType;
         string description;
         address proposer;
         bool isAccepted;
@@ -22,9 +28,11 @@ contract Caves {
         string dao; // The DAO that the post belongs to
         string[] imageHashes; // change to NFT addresses after implementing NFTs
         string[] imageAddresses;
+        string title;
         string content;
         address author;
         uint256 timestamp;
+        bool isPublished;
     }
 
     struct DAO {
@@ -41,6 +49,8 @@ contract Caves {
     }
 
     mapping(string => DAO) public daos; // DAOs by names
+    mapping(bytes32 => Post) private posts; // Posts by hashes
+    mapping(bytes32 => Proposal) private proposals; // Proposals by hashes
 
     constructor(address tokenAddress, address taxAccount) {
         token = IERC20(tokenAddress);
@@ -105,6 +115,7 @@ contract Caves {
      **************************************************************************/
     function createPost(
         string memory daoName,
+        string memory title,
         string memory content,
         string[] memory imageHashes,
         address author
@@ -112,13 +123,14 @@ contract Caves {
         DAO storage dao = daos[daoName];
         Post memory newPost;
         newPost.dao = daoName;
+        newPost.title = title;
         newPost.content = content;
         newPost.imageHashes = imageHashes;
         newPost.author = author;
         newPost.timestamp = block.timestamp;
         dao.posts.push(newPost);
 
-        emit PostCreated(daoName, author);
+        emit PostCreated(daoName, title, author);
     }
 
     /**************************************************************************
@@ -127,6 +139,7 @@ contract Caves {
     function createProposal(
         string memory daoName,
         string memory description,
+        string memory proposalType,
         address proposer
     ) external {
         DAO storage dao = daos[daoName];
@@ -135,10 +148,14 @@ contract Caves {
         Proposal storage newProposal = dao.pendingProposals[
             dao.pendingProposals.length - 1
         ];
-        newProposal.description = description;
+        newProposal.proposalType = _string2ProposalType(proposalType);
         newProposal.proposer = proposer;
 
-        emit ProposalCreated(daoName, proposer, description);
+        bytes32 proposalID = keccak256(
+            abi.encodePacked(daoName, description, proposalType, proposer)
+        );
+        proposals[proposalID] = newProposal;
+        emit ProposalCreated(daoName, proposalID, proposer);
     }
 
     function voteProposal(
@@ -200,22 +217,40 @@ contract Caves {
         return false;
     }
 
+    function _string2ProposalType(
+        string memory proposalType
+    ) internal pure returns (ProposalType) {
+        if (keccak256(bytes(proposalType)) == keccak256(bytes("PublishPost"))) {
+            return ProposalType.PublishPost;
+        } else if (
+            keccak256(bytes(proposalType)) == keccak256(bytes("LeaveDAO"))
+        ) {
+            return ProposalType.LeaveDAO;
+        } else {
+            revert("Invalid proposal type");
+        }
+    }
+
     /**************************************************************************
      *                               Events                                   *
      **************************************************************************/
     event DAOCreated(string indexed name, address indexed initiator);
     event BoardMemberJoined(string indexed daoName, address indexed member);
     event MemberJoined(string indexed daoName, address indexed member);
-    event PostCreated(string indexed daoName, address indexed author);
+    event PostCreated(
+        string indexed daoName,
+        string title,
+        address indexed author
+    );
     event ProposalCreated(
         string indexed daoName,
-        address indexed proposer,
-        string description
+        bytes32 indexed proposalHash,
+        address indexed proposer
     );
     event ProposalVoted(
         string indexed daoName,
-        address indexed voter,
-        uint256 indexed proposalIndex,
-        bool vote
+        bytes32 indexed proposalHash,
+        bool vote,
+        address indexed voter
     );
 }
