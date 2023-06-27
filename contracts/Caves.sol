@@ -15,6 +15,7 @@ contract Caves {
     }
 
     struct Proposal {
+        bytes32 hash; // Hash of the proposal
         ProposalType proposalType;
         string description;
         address proposer;
@@ -165,6 +166,7 @@ contract Caves {
             abi.encodePacked(daoName, description, proposalType, proposer)
         );
         proposals[proposalID] = newProposal;
+        newProposal.hash = proposalID;
         emit ProposalCreated(daoName, proposalID, proposer);
     }
 
@@ -201,6 +203,8 @@ contract Caves {
                 dao.acceptedProposals.push(proposal);
             }
         }
+
+        emit ProposalVoted(daoName, proposal.hash, vote, msg.sender);
     }
 
     /**************************************************************************

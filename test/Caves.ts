@@ -78,7 +78,13 @@ describe("Caves", function () {
     await expect(
       caves
         .connect(addr1)
-        .createPost("TestDAO", "First Post!", [], await addr1.getAddress())
+        .createPost(
+          "TestDAO",
+          "First Post!",
+          "First Post Contents!",
+          [],
+          await addr1.getAddress()
+        )
     )
       .to.emit(caves, "PostCreated")
       .withArgs("TestDAO", "First Post!", await addr1.getAddress());
@@ -100,6 +106,7 @@ describe("Caves", function () {
 
   it("Should allow board members to vote on an existing proposal", async function () {
     await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
+    await caves.connect(addr1).joinAsBoardMember("TestDAO", 10);
     await caves
       .connect(addr2)
       .createProposal(
@@ -108,9 +115,9 @@ describe("Caves", function () {
         "PublishPost",
         await addr2.getAddress()
       );
-    await expect(caves.connect(addr2).voteOnProposal(1, true)).to.emit(
+    await expect(caves.connect(addr1).voteProposal("TestDAO", 0, true)).to.emit(
       caves,
-      "ProposalVotedOn"
+      "ProposalVoted"
     );
   });
 });
