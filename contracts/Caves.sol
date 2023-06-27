@@ -21,7 +21,7 @@ contract Caves {
     }
 
     struct Post {
-        DAO dao; // The DAO that the post belongs to
+        uint256 daoID; // The DAO that the post belongs to
         string[] imageHashes; // change to NFT addresses after implementing NFTs
         string[] imageAddresses;
         string content;
@@ -117,7 +117,7 @@ contract Caves {
     ) external {
         DAO storage dao = daos[daoIndex];
         Post memory newPost;
-        newPost.dao = dao;
+        newPost.daoID = daoIndex;
         newPost.content = content;
         newPost.imageHashes = imageHashes;
         newPost.author = author;
