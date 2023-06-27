@@ -14,7 +14,8 @@ contract Caves {
         address proposer;
         bool isAccepted;
         uint256 totalVotes;
-        mapping(address => bool) votes;
+        address[] voters;
+        uint8[] votes; // 0 = no vote, 1 = yes, 2 = no
     }
 
     struct Post {
@@ -31,7 +32,8 @@ contract Caves {
         uint256 treasryPool; // Total amount of tokens staked in the DAO
         address[] board;
         address[] members;
-        Proposal[] proposals;
+        Proposal[] pendingProposals;
+        Proposal[] acceptedProposals;
         Post[] posts;
     }
 
@@ -87,7 +89,6 @@ contract Caves {
      *                              Proposals                                 *
      **************************************************************************/
     function createProposal(
-        address daoOwner,
         uint256 daoIndex,
         string memory description,
         address proposer
@@ -96,7 +97,30 @@ contract Caves {
         Proposal memory newProposal;
         newProposal.description = description;
         newProposal.proposer = proposer;
-        dao.proposals.push(newProposal);
+        newProposal.voters = dao.board;
+        newProposal.votes = new uint8[](dao.board.length);
+        dao.pendingProposals.push(newProposal);
+    }
+
+    function voteProposal(
+        uint256 daoIndex,
+        uint256 proposalIndex,
+        bool vote
+    ) external {
+        DAO storage dao = daos[daoIndex];
+        Proposal storage proposal = dao.pendingProposals[proposalIndex];
+        require(
+            proposal.votes[dao.board.length - 1] == 0,
+            "Proposal has already been voted on"
+        );
+        uint256 voteWeight = token.balanceOf(dao.board[proposal.voters.length]);
+        if (vote) {
+            proposal.votes[proposal.voters.length] = 1;
+            proposal.totalVotes += voteWeight;
+        } else {
+            proposal.votes[proposal.voters.length] = 2;
+        }
+        proposal.voters.push(msg.sender);
     }
 
     /**************************************************************************
