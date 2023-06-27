@@ -62,7 +62,7 @@ describe("Caves", function () {
 
   it("Should allow board members to join with stake", async function () {
     await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
-    await expect(caves.connect(addr2).joinAsBoardMember(1, 20))
+    await expect(caves.connect(addr2).joinAsBoardMember("TestDAO", 20))
       .to.emit(caves, "BoardMemberJoined")
       .withArgs(1, await addr2.getAddress(), 20);
   });

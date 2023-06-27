@@ -46,6 +46,7 @@ contract Caves {
         Proposal[] pendingProposals;
         Proposal[] acceptedProposals;
         Post[] posts;
+        bool isValue; // Used to check if the DAO exists
     }
 
     mapping(string => DAO) public daos; // DAOs by names
@@ -67,6 +68,10 @@ contract Caves {
         uint256 initialStake
     ) external {
         require(
+            !daos[name].isValue,
+            "There is already a DAO with this name. Please choose another name"
+        );
+        require(
             initialStake >= MIN_INIT_STAKE,
             "Initial stake is less than minimum stake required"
         );
@@ -86,6 +91,10 @@ contract Caves {
     }
 
     function joinAsBoardMember(string memory daoName, uint256 stake) external {
+        require(
+            daos[daoName].isValue,
+            "There is no DAO with this name. Please check the name and try again"
+        );
         DAO storage dao = daos[daoName];
         require(
             token.balanceOf(msg.sender) >= dao.minStake,
