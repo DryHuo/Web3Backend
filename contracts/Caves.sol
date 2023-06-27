@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract Caves {
     IERC20 public token;
     address private _taxAccount; // The address that receives the tax fees
-    uint256 public constant TAX_RATE = 2; // The fee rate is 2%
+    uint256 public constant TAX_RATE = 2; // The tax rate is 2%
     uint256 public constant MIN_INIT_STAKE = 10; // The minimum amount of tokens to stake to create a DAO
 
     struct Proposal {
