@@ -11,7 +11,7 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const WikiToken = await WikiTokenFactory.deploy(1000000) as unknown as Contract;
+  const WikiToken = await WikiTokenFactory.deploy(1000000) as any;
   console.log("WikiToken address:", WikiToken.address);
 
 
@@ -27,7 +27,7 @@ async function main() {
 
   // Deploy the DAO
   const DAOFactory = await ethers.getContractFactory("DAO");
-  const dao = (await DAOFactory.deploy(WikiToken.address, walletAddress, 0.1, 0)) as unknown as Contract;
+  const dao = (await DAOFactory.deploy(wikiTokenAddress, walletAddress, 0.1, 0)) as unknown as Contract;
   console.log("DAO address:", dao.address);
 
   // Lock logic (replace with sdesired lock logic)
