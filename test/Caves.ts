@@ -17,8 +17,14 @@ describe("Caves", function () {
     [deployer, addr1, addr2] = await ethers.getSigners();
 
     // Deploy the contract and get its instance
-    wikiToken = (await WikiTokenFactory.deploy(10000)) as any;
+    wikiToken = (await WikiTokenFactory.deploy(
+      ethers.parseEther("1000000000")
+    )) as any;
     console.log("WikiToken deployed to:", wikiToken.target);
+
+    // Transfer some tokens to addr1 and addr2
+    await wikiToken.transfer(addr1.address, ethers.parseEther("1000"));
+    await wikiToken.transfer(addr2.address, ethers.parseEther("1000"));
 
     // Deploy the Caves contract with the address of the deployed WikiToken
     CaveFactory = await ethers.getContractFactory("Caves");
@@ -30,15 +36,15 @@ describe("Caves", function () {
     const addr2Signer = wikiToken.connect(addr2);
     const approveTx = await deployerSigner.approve(
       caves.target,
-      "90000000000000000000"
+      ethers.parseEther("1000")
     );
     const approveTx2 = await addr1Signer.approve(
       caves.target,
-      "90000000000000000000"
+      ethers.parseEther("200")
     );
     const approveTx3 = await addr2Signer.approve(
       caves.target,
-      "90000000000000000000"
+      ethers.parseEther("200")
     );
     await approveTx.wait();
     await approveTx2.wait();
@@ -47,7 +53,7 @@ describe("Caves", function () {
 
   it("Should create a new DAO", async function () {
     await expect(
-      caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100)
+      await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100)
     )
       .to.emit(caves, "DAOCreated")
       .withArgs("TestDAO", await deployer.getAddress());
@@ -55,16 +61,16 @@ describe("Caves", function () {
 
   it("Should allow members to join", async function () {
     await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
-    await expect(caves.connect(addr1).joinAsMember(1))
+    await expect(caves.connect(addr1).joinAsMember("TestDAO"))
       .to.emit(caves, "MemberJoined")
-      .withArgs(1, await addr1.getAddress());
+      .withArgs("TestDAO", await addr1.getAddress());
   });
 
   it("Should allow board members to join with stake", async function () {
     await caves.connect(deployer).createDAO("TestDAO", "A test DAO", 10, 100);
-    await expect(caves.connect(addr2).joinAsBoardMember("TestDAO", 20))
+    await expect(caves.connect(addr2).joinAsBoardMember("TestDAO", 10))
       .to.emit(caves, "BoardMemberJoined")
-      .withArgs(1, await addr2.getAddress(), 20);
+      .withArgs("TestDAO", 10, 0, await addr2.getAddress());
   });
 
   it("Should create a new post", async function () {

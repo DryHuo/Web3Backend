@@ -80,6 +80,7 @@ contract Caves {
         newDAO.initiator = msg.sender;
         newDAO.minStake = minStake;
         newDAO.description = description;
+        newDAO.isValue = true;
 
         uint256 tax = (initialStake * TAX_RATE) / 100;
         token.transferFrom(msg.sender, _taxAccount, tax);
@@ -109,7 +110,7 @@ contract Caves {
 
         dao.treasryPool += stake - tax;
 
-        emit BoardMemberJoined(daoName, msg.sender);
+        emit BoardMemberJoined(daoName, stake, tax, msg.sender);
     }
 
     function joinAsMember(string memory daoName) external {
@@ -244,7 +245,12 @@ contract Caves {
      *                               Events                                   *
      **************************************************************************/
     event DAOCreated(string indexed name, address indexed initiator);
-    event BoardMemberJoined(string indexed daoName, address indexed member);
+    event BoardMemberJoined(
+        string indexed daoName,
+        uint256 stake,
+        uint256 tax,
+        address indexed member
+    );
     event MemberJoined(string indexed daoName, address indexed member);
     event PostCreated(
         string indexed daoName,
