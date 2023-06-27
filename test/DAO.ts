@@ -23,6 +23,16 @@ describe("Caves", function () {
     CaveFactory = await ethers.getContractFactory("Caves");
     caves = (await CaveFactory.deploy(wikiToken.target, deployer)) as any;
     console.log("Caves deployed to:", caves.target);
+
+    const deployerSigner = wikiToken.connect(deployer);
+    const addr1Signer = wikiToken.connect(addr1);
+    const addr2Signer = wikiToken.connect(addr2);
+    const approveTx = await deployerSigner.approve(caves.target, "90000000000000000000");
+    const approveTx2 = await addr1Signer.approve(caves.target, "90000000000000000000");
+    const approveTx3 = await addr2Signer.approve(caves.target, "90000000000000000000");
+    await approveTx.wait();
+    await approveTx2.wait();
+    await approveTx3.wait();
   });
 
   it("Should create a new DAO", async function () {
