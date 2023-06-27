@@ -10,23 +10,15 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const wikiTokenDeployment = (await WikiTokenFactory.deploy(
-    ethers.parseEther("1000000")
-  )) as any; // Replace with desired initial supply
-  const wikiToken = await wikiTokenDeployment.deployed(); // Wait for deployment transaction to be confirmed
-  console.log("WikiToken address:", wikiToken.address);
+  const wikiToken = (await WikiTokenFactory.deploy(10000)) as any; // Replace with desired initial supply
+  console.log("WikiToken address:", wikiToken.target);
 
   // Deploy the DAO
-  const _LifeWikiAssetPool = process.env.LIFE_WIKI_ASSET_POOL || "";
-  const DAOFactory = await ethers.getContractFactory("DAO");
-  const dao = (await DAOFactory.deploy(
-    wikiToken.address,
-    _LifeWikiAssetPool,
-    minStake,
-    initialAssetPool
-  )) as any;
-  await dao.deployed();
-  console.log("DAO address:", dao.address);
+  const TaxAccount = process.env.TAX_ACOUNT || "";
+  const CaveFactory = await ethers.getContractFactory("Caves");
+  const cave = (await CaveFactory.deploy(wikiToken.target, TaxAccount)) as any;
+  console.log("DAO", cave);
+  console.log("DAO address:", cave.target);
 
   // Lock logic (replace with desired lock logic)
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
