@@ -1,5 +1,6 @@
 import { Contract } from "ethers";
 import { ethers } from "hardhat";
+import "dotenv/config";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -10,14 +11,23 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const wikiToken = (await WikiTokenFactory.deploy(
-    ethers.parseEther("1000000")
-  )) as Contract; // Replace with desired initial supply
-  console.log("WikiToken address:", wikiToken.address);
+  const WikiToken = await WikiTokenFactory.deploy(1000000) as unknown as Contract;
+  console.log("WikiToken address:", WikiToken.address);
+
+
+  const walletAddress = process.env.ASSET_POOL_ADDRESS;
+  if (!walletAddress) {
+    throw new Error("Missing environment variable WALLET_ADDRESS");
+  }
+
+  const wikiTokenAddress = WikiToken.address;
+  if (!wikiTokenAddress) {
+    throw new Error("WikiToken address is not available");
+  }
 
   // Deploy the DAO
   const DAOFactory = await ethers.getContractFactory("DAO");
-  const dao = (await DAOFactory.deploy(wikiToken.address)) as Contract; // This assumes the DAO contract takes the WikiToken's address in the constructor
+  const dao = (await DAOFactory.deploy(WikiToken.address, walletAddress, 0.1, 0)) as unknown as Contract;
   console.log("DAO address:", dao.address);
 
   // Lock logic (replace with sdesired lock logic)
