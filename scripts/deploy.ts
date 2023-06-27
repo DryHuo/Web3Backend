@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import { Contract, ContractTransaction } from "ethers";
 import { ethers } from "hardhat";
 
 async function main() {
@@ -10,17 +10,23 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const wikiToken = (await WikiTokenFactory.deploy(
+  const wikiTokenDeployment = (await WikiTokenFactory.deploy(
     ethers.parseEther("1000000")
-  )) as Contract; // Replace with desired initial supply
+  )) as any; // Replace with desired initial supply
+  const wikiToken = await wikiTokenDeployment.deployed(); // Wait for deployment transaction to be confirmed
   console.log("WikiToken address:", wikiToken.address);
 
   // Deploy the DAO
   const DAOFactory = await ethers.getContractFactory("DAO");
-  const dao = (await DAOFactory.deploy(wikiToken.address)) as Contract; // This assumes the DAO contract takes the WikiToken's address in the constructor
+  const dao = (await DAOFactory.deploy(
+    wikiToken.address,
+    process.env.PRIVATE_KEY,
+    minStake,
+    initialAssetPool
+  )) as any;
   console.log("DAO address:", dao.address);
 
-  // Lock logic (replace with sdesired lock logic)
+  // Lock logic (replace with desired lock logic)
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const unlockTime = currentTimestampInSeconds + 60;
   const lockedAmount = ethers.parseEther("0.001");
