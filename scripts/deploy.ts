@@ -10,7 +10,7 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const wikiToken = await WikiTokenFactory.deploy(10000)
+  const wikiToken = await WikiTokenFactory.deploy(ethers.parseEther("100000000"))
   console.log("WikiToken", wikiToken.target);
 
   // Deploy the DAO
