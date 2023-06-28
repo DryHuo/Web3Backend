@@ -10,15 +10,14 @@ async function main() {
 
   // Deploy the WikiToken
   const WikiTokenFactory = await ethers.getContractFactory("WikiToken");
-  const wikiToken = (await WikiTokenFactory.deploy(10000)) as any; // Replace with desired initial supply
-  console.log("WikiToken address:", wikiToken.target);
+  const wikiToken = await WikiTokenFactory.deploy(10000)
+  console.log("WikiToken", wikiToken.target);
 
   // Deploy the DAO
   const TaxAccount = process.env.TAX_ACOUNT || "";
   const CaveFactory = await ethers.getContractFactory("Caves");
-  const cave = (await CaveFactory.deploy(wikiToken.target, TaxAccount)) as any;
-  console.log("DAO", cave);
-  console.log("DAO address:", cave.target);
+  const cave = await CaveFactory.deploy(wikiToken.target, TaxAccount) as any;
+  console.log("DAO", cave.target);
 
   // Lock logic (replace with desired lock logic)
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
