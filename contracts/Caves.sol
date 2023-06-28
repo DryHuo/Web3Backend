@@ -145,6 +145,36 @@ contract Caves {
     }
 
     /**************************************************************************
+     *                              Getters                                   *
+     **************************************************************************/
+    function getDAO(
+        string memory daoName
+    )
+        external
+        view
+        returns (
+            string memory,
+            string memory,
+            address,
+            uint256,
+            uint256,
+            address[] memory,
+            address[] memory
+        )
+    {
+        DAO storage dao = daos[daoName];
+        return (
+            dao.name,
+            dao.description,
+            dao.initiator,
+            dao.minStake,
+            dao.treasryPool,
+            dao.board,
+            dao.members
+        );
+    }
+
+    /**************************************************************************
      *                              Proposals                                 *
      **************************************************************************/
     function createProposal(
