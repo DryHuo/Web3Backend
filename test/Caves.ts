@@ -1,6 +1,5 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { any } from "hardhat/internal/core/params/argumentTypes";
 
 describe("Caves", function () {
   let WikiTokenFactory: any;

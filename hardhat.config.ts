@@ -12,10 +12,10 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
-    // polygon_mumbai: {
-    //   url: "https://rpc-mumbai.maticvigil.com/v1",
-    //   accounts: [process.env.PRIVATE_KEY],
-    // },
+    mumbai: {
+      url: "https://polygon-mumbai.g.alchemy.com/v2/Y8SzPXM7p-3VEe5rdg_W4BaJ2pS-1sbh",
+      accounts: [process.env.PRIVATE_KEY],
+    },
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
