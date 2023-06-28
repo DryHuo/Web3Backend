@@ -25,7 +25,9 @@ describe("WikiToken", function () {
 
     it("Should assign the total supply of tokens to the owner", async function () {
       const ownerBalance = await wikiToken.balanceOf(owner.address);
+      console.log("Owner balance is", ownerBalance.toString());
       expect(await wikiToken.totalSupply()).to.equal(ownerBalance);
+      expect(ownerBalance).to.equal(ethers.parseEther("1000"));
     });
   });
 
@@ -44,7 +46,7 @@ describe("WikiToken", function () {
 
     it("Should update balances after transfers", async function () {
       const initialOwnerBalance = await wikiToken.balanceOf(owner.address);
-
+      expect(await wikiToken.balanceOf(addr1.address)).to.equal(0);
       // Transfer 100 tokens from owner to addr1
       await wikiToken.transfer(addr1.address, ethers.parseEther("100"));
 
@@ -60,6 +62,7 @@ describe("WikiToken", function () {
       await wikiToken.mint(owner.address, ethers.parseEther("100"));
 
       expect(await wikiToken.balanceOf(owner.address)).to.equal(initialOwnerBalance + ethers.parseEther("100"));
+      expect(await wikiToken.totalSupply()).to.equal(initialOwnerBalance + ethers.parseEther("100"));
     });
   });
 });
